@@ -1,2 +1,8 @@
 /books
 __pycache__/
+.idea
+*.docx
+*.csv
+*.xlsx
+!python_scripts/Mr. Nath Files/Electoral_College.csv
+!python_scripts/Mr. Nath Files/netflix_titles.csv
