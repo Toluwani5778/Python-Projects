@@ -1,0 +1,11 @@
+potato,brambory
+carrot,mrkev
+garlic,cesnek
+onion,cibule
+tomato,rajce
+pepper,paprika
+cucumber,okurka
+lettuce,salat
+chives,pazitka
+beetroot,repa
+salmon,losos
