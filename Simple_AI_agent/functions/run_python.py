@@ -16,18 +16,18 @@ def run_python_file(working_directory, file_path):
     except TypeError:
         return "Error: Invalid type for 'file_path'. It should be a string or None."
     
+    if not os.path.exists(full_path):
+        return f'Error: File "{file_path}" not found.'
+    
     contents = os.listdir(working_directory)
     if (file_path_lvls[0] not in contents) and (file_path_lvls[0] not in ['.']):
         return f'Error: Cannot execute "{file_path}" as it is outside the permitted working directory'
-    
-    if not os.path.exists(full_path):
-        return f'Error: File "{file_path}" not found.'
     
     if not full_path.endswith('.py'):
         return f'Error: "{file_path}" is not a Python file.'
     
     try:
-        output = subprocess.run(['python', full_path], check=True, cwd=working_directory, text=True, capture_output=True, timeout=30)
+        output = subprocess.run(['python', full_path], check=True, text=True, capture_output=True, timeout=30)
         if output.stdout != None:
             return f"STDOUT: {output.stdout}, STDERR: {output.stderr}"
         return "No output produced."
