@@ -6,3 +6,4 @@ __pycache__/
 *.xlsx
 !python_scripts/Mr. Nath Files/Electoral_College.csv
 !python_scripts/Mr. Nath Files/netflix_titles.csv
+myenv/
