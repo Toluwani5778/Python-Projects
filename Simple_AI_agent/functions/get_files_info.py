@@ -1,5 +1,6 @@
 import os
 
+
 def get_files_info(working_directory, directory=None):
     """
     Get information about files in the specified directory.
@@ -9,21 +10,29 @@ def get_files_info(working_directory, directory=None):
     :return: A list of dictionaries containing file information.
     """
     orig_directory = directory
-    if directory[-1] == '/':
-        directory = directory[:-1]
     try:
-        join_dir = os.path.join(working_directory, directory) if directory else working_directory
+        if directory[-1] == "/":
+            directory = directory[:-1]
+    except TypeError:
+        directory = "."
+
+    try:
+        join_dir = (
+            os.path.join(working_directory, directory)
+            if directory
+            else working_directory
+        )
     except TypeError:
         return "Error: Invalid type for 'directory'. It should be a string or None."
-    
+
     contents = os.listdir(working_directory)
 
-    if (directory not in contents) and (directory not in ['.']):
+    if (directory not in contents) and (directory not in ["."]):
         return f'Error: Cannot list "{orig_directory}" as it is outside the permitted working directory'
 
     if not os.path.isdir(join_dir):
         return f'Error: "{directory}" is not a directory'
-    
+
     dir_content = ""
     contents = os.listdir(join_dir)
     for content in contents:
