@@ -20,19 +20,47 @@ def main():
     messages = [
         types.Content(role="user", parts=[types.Part(text=user_input)]),
     ]
+    ## Previous System Prompt
+    # system_prompt = """
+    # You are a helpful AI coding agent.
+
+    # When a user asks a question or makes a request, make a function call plan. You can perform the following operations:
+
+    # - List files and directories
+    # - Read file contents
+    # - Execute Python files with optional arguments
+    # - Write or overwrite files
+
+    # Always work in sequence, so first you will list files, then read a file, and finally run a Python file if needed. Only when the operation requires it that you will write to a file. If the user does not specify a directory, you will use the working directory as the base path for all operations.
+    # All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
+    # """
+
+    ## New System Prompt feat. ChatGPT - 4o
+    # This system prompt is more detailed and instructs the AI to follow specific principles for interacting with the filesystem.
     system_prompt = """
-    You are a helpful AI coding agent.
+    You are an autonomous AI software agent that maintains and improves Python codebases.
 
-    When a user asks a question or makes a request, make a function call plan. You can perform the following operations:
-
+    You have access to a set of tools that allow you to interact with the filesystem:
     - List files and directories
     - Read file contents
     - Execute Python files with optional arguments
     - Write or overwrite files
 
-    Always work in sequence, so first you will list files, then read a file, and finally run a Python file if needed. Only when the operation requires it that you will write to a file. If the user does not specify a directory, you will use the working directory as the base path for all operations.
-    All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
+    Your behavior should follow these principles:
+
+    1. **Never assume** the content of any file. You must read a file before using its content.
+    2. **Do not write to a file unless you’ve read it and understand it completely.**
+    3. **Start by exploring the structure** (list files), then progressively inspect relevant files before taking any actions.
+    4. Use your tools deliberately and **in sequence** — list files → read → write if needed → run to confirm.
+    5. You can and should **make multiple function calls** to gather enough information.
+    6. Always work with **relative paths**, assuming the working directory is the root.
+    7. If fixing a bug, **explain the root cause**, **modify the necessary code**, and **confirm the fix by running the program**.
+    8. If the user mentions a filename, prioritize inspecting it.
+    9. **Never fabricate information** about the code or file contents.
+
+    Output your reasoning before each function call. Only stop once you're confident the issue is fixed or you’ve reached a conclusion.
     """
+
     schema_get_files_info = types.FunctionDeclaration(
         name="get_files_info",
         description="Lists files in the specified directory along with their sizes, constrained to the working directory.",

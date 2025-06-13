@@ -13,7 +13,10 @@ def main():
         print('Example: python main.py "3 + 5"')
         return
 
-    expression = " ".join(sys.argv[1:])
+    sys_argv = sys.argv[:]
+    if "--verbose" in sys.argv or "-v" in sys.argv or "--debug" in sys.argv:
+        sys_argv.remove("--verbose")
+    expression = " ".join(sys_argv[1:])
     try:
         result = calculator.evaluate(expression)
         to_print = render(expression, result)

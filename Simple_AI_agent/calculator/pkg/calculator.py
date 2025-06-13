@@ -1,5 +1,8 @@
 # calculator.py
 
+import re
+import sys
+
 
 class Calculator:
     def __init__(self):
@@ -19,7 +22,9 @@ class Calculator:
     def evaluate(self, expression):
         if not expression or expression.isspace():
             return None
-        tokens = expression.strip().split()
+        tokens = re.findall(r"(\d+(?:\.\d+)?|[+\-*/])", expression)
+        if ("--verbose" in sys.argv) | ("-v" in sys.argv) | ("--debug" in sys.argv):
+            print(f"Tokens: {tokens}")
         return self._evaluate_infix(tokens)
 
     def _evaluate_infix(self, tokens):
