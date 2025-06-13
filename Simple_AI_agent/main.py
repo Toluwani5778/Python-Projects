@@ -9,12 +9,16 @@ from functions.call_function import call_function
 def main():
     """
     Main function to generate content using Google Gemini AI.
+    Now this more resembles a full AI agent that can perform multiple function calls in sequence.
     """
     load_dotenv()
     api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
+    user_input = sys.argv[1]
+    verbose = "--verbose" in sys.argv
+    MAX_ITERATIONS = 20
     messages = [
-        types.Content(role="user", parts=[types.Part(text=sys.argv[1])]),
+        types.Content(role="user", parts=[types.Part(text=user_input)]),
     ]
     system_prompt = """
     You are a helpful AI coding agent.
@@ -26,6 +30,7 @@ def main():
     - Execute Python files with optional arguments
     - Write or overwrite files
 
+    Always work in sequence, so first you will list files, then read a file, and finally run a Python file if needed. Only when the operation requires it that you will write to a file. If the user does not specify a directory, you will use the working directory as the base path for all operations.
     All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
     """
     schema_get_files_info = types.FunctionDeclaration(
@@ -97,35 +102,49 @@ def main():
         ]
     )
 
-    response = client.models.generate_content(
-        model="gemini-2.0-flash-001",
-        contents=messages,
-        config=types.GenerateContentConfig(
-            tools=[available_functions], system_instruction=system_prompt
-        ),
-    )
+    for i in range(MAX_ITERATIONS):
+        if verbose:
+            print(f"\nIteration {i+1}")
 
-    verbose = False
-    try:
-        if sys.argv[2] == "--verbose":
-            verbose = True
-    except IndexError:
-        pass
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-001",
+            contents=messages,
+            config=types.GenerateContentConfig(
+                tools=[available_functions], system_instruction=system_prompt
+            ),
+        )
+        try:
+            if response.candidates:
+                for candidate in response.candidates:
+                    if verbose:
+                        print("Model Thought process:", candidate.content.parts[0].text)
+                    messages.append(candidate.content)
+        except AttributeError:
+            pass
 
-    function_call_part = response.function_calls[0]
-    if function_call_part:
-        function_call_result = call_function(function_call_part, verbose=verbose)
-        if not function_call_result.parts[0].function_response.response:
-            raise ValueError("Function call did not return a valid response.")
+        if response.function_calls:
+            for function_call_part in response.function_calls:
+                function_call_result = call_function(
+                    function_call_part, verbose=verbose
+                )
+                if not function_call_result.parts[0].function_response.response:
+                    raise ValueError("Function call did not return a valid response.")
+                else:
+                    if verbose:
+                        print(
+                            f"-> {function_call_result.parts[0].function_response.response} \n"
+                        )
+                    messages.append(function_call_result)
+
         else:
-            print(f"-> {function_call_result.parts[0].function_response.response}")
-    else:
-        print("Model Response:", response.text)
-
-    if verbose:
-        print("User prompt:", sys.argv[1])
-        print("Prompt tokens:", response.usage_metadata.prompt_token_count)
-        print("Response tokens:", response.usage_metadata.candidates_token_count)
+            print("\nModel Response:", response.text)
+            if verbose:
+                print("User prompt:", user_input)
+                print("Prompt tokens:", response.usage_metadata.prompt_token_count)
+                print(
+                    "Response tokens:", response.usage_metadata.candidates_token_count
+                )
+            break
 
 
 if __name__ == "__main__":

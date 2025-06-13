@@ -9,11 +9,11 @@ from functions.call_function import call_function
 def main():
     """
     Main function to generate content using Google Gemini AI.
+    The agent can only perform single function calls at a time.
     """
     load_dotenv()
     api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
-    response = None
     messages = [
         types.Content(role="user", parts=[types.Part(text=sys.argv[1])]),
     ]
@@ -27,7 +27,6 @@ def main():
     - Execute Python files with optional arguments
     - Write or overwrite files
 
-    Always work in sequence, so first you will list files, then read a file, and finally run a Python file if needed. Only when the operation requires it that you will write to a file. If the user does not specify a directory, you will use the working directory as the base path for all operations.
     All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
     """
     schema_get_files_info = types.FunctionDeclaration(
@@ -99,47 +98,30 @@ def main():
         ]
     )
 
-    response_candidates = None
-    for i in range(20):
-        response = client.models.generate_content(
-            model="gemini-2.0-flash-001",
-            contents=messages,
-            config=types.GenerateContentConfig(
-                tools=[available_functions], system_instruction=system_prompt
-            ),
-        )
-        try:
-            if response_candidates:
-                print("Response candidates:", response_candidates)
-                for candidate in response_candidates:
-                    messages = [
-                        types.Content(
-                            role="user", parts=[types.Part(text=candidate.content)]
-                        ),
-                    ]
-        except AttributeError:
-            pass
+    response = client.models.generate_content(
+        model="gemini-2.0-flash-001",
+        contents=messages,
+        config=types.GenerateContentConfig(
+            tools=[available_functions], system_instruction=system_prompt
+        ),
+    )
 
-        verbose = False
-        try:
-            if sys.argv[2] == "--verbose":
-                verbose = True
-        except IndexError:
-            pass
+    verbose = False
+    try:
+        if sys.argv[2] == "--verbose":
+            verbose = True
+    except IndexError:
+        pass
 
-        function_call_part = response.function_calls[0]
-        response_candidates = response.candidates if response.candidates else None
-        if function_call_part:
-            function_call_result = call_function(function_call_part, verbose=verbose)
-            if not function_call_result.parts[0].function_response.response:
-                raise ValueError("Function call did not return a valid response.")
-            else:
-                # print(f"-> {function_call_result.parts[0].function_response.response}")
-                messages.append(function_call_result)
-                print(messages)
+    function_call_part = response.function_calls[0]
+    if function_call_part:
+        function_call_result = call_function(function_call_part, verbose=verbose)
+        if not function_call_result.parts[0].function_response.response:
+            raise ValueError("Function call did not return a valid response.")
         else:
-            print("Model Response:", response.text)
-            break
+            print(f"-> {function_call_result.parts[0].function_response.response}")
+    else:
+        print("Model Response:", response.text)
 
     if verbose:
         print("User prompt:", sys.argv[1])
