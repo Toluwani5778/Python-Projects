@@ -206,3 +206,40 @@ class Maze:
         for col in self.__cells:
             for cell in col:
                 cell.visited = False
+
+    def solve(self):
+        return self._solve_r(0, 0)
+
+    def _solve_r(self, i, j):
+        self.__animate()
+        cell = self.__cells[i][j]
+        cell.visited = True
+        if i == self.__num_cols - 1 and j == self.__num_rows - 1:
+            return True
+        directions = [(0, -1), (-1, 0), (0, 1), (1, 0)]
+        for direction in directions:
+            ni, nj = i + direction[0], j + direction[1]
+            if 0 <= ni < self.__num_cols and 0 <= nj < self.__num_rows:
+                neighbor_cell = self.__cells[ni][nj]
+                if not neighbor_cell.visited and not self.__is_wall_between(
+                    cell, neighbor_cell
+                ):
+                    neighbor_cell.visited = True
+                    print(f"Moving from ({i}, {j}) to ({ni}, {nj})")
+                    cell.draw_move(neighbor_cell)
+                    if self._solve_r(ni, nj):
+                        return True
+                    cell.draw_move(neighbor_cell, undo=True)
+        cell.visited = False
+        return False
+
+    def __is_wall_between(self, cell1, cell2):
+        if cell1.midpoint().x < cell2.midpoint().x:
+            return cell1.has_right_wall or cell2.has_left_wall
+        elif cell1.midpoint().x > cell2.midpoint().x:
+            return cell1.has_left_wall or cell2.has_right_wall
+        elif cell1.midpoint().y < cell2.midpoint().y:
+            return cell1.has_bottom_wall or cell2.has_top_wall
+        elif cell1.midpoint().y > cell2.midpoint().y:
+            return cell1.has_top_wall or cell2.has_bottom_wall
+        return False
