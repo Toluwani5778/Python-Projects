@@ -18,15 +18,19 @@ def main():
     # cell_1.draw_move(cell_2)
     # cell_1.draw_move(cell_2, undo=True)
     maze = Maze(
-        1,
-        1,
-        2,
-        3,
-        100,
-        100,
-        # window,
+        5,
+        5,
+        10,
+        20,
+        50,
+        50,
+        window,
+        # seed=42,
     )
-    print(len(maze._Maze__cells))
+    # maze._Maze__break_entrance_and_exit()
+    # for col in range(maze._Maze__num_cols):
+    #     for row in range(maze._Maze__num_rows):
+    #         maze._Maze__break_walls_r(col, row)
     window.wait_for_close()
 
 
